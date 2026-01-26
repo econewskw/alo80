@@ -43,13 +43,25 @@ const Admin = () => {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        // Check if it's an RLS policy violation (unauthorized access)
+        if (error.code === "PGRST301" || error.message?.includes("policy")) {
+          toast({
+            title: "غير مصرح",
+            description: "ليس لديك صلاحية الوصول إلى هذه الصفحة",
+            variant: "destructive"
+          });
+          navigate("/login");
+          return;
+        }
+        throw error;
+      }
       setSubmissions(data || []);
     } catch (error) {
       console.error("Error fetching submissions:", error);
       toast({
         title: "خطأ",
-        description: "فشل في تحميل الرسائل",
+        description: "فشل في تحميل الرسائل. تأكد من أنك مسجل كمدير.",
         variant: "destructive"
       });
     } finally {
