@@ -25,7 +25,12 @@ const HeroSection = () => {
             <a href="#features" className="text-foreground/80 hover:text-accent transition-colors font-medium">المميزات</a>
             <a href="#contact" className="text-foreground/80 hover:text-accent transition-colors font-medium">تواصل معنا</a>
           </div>
-          <Button variant="accent" size="lg" className="hidden md:flex">
+          <Button 
+            variant="accent" 
+            size="lg" 
+            className="hidden md:flex"
+            onClick={() => document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })}
+          >
             احصل على عرض
           </Button>
           <MobileNav />
@@ -48,11 +53,19 @@ const HeroSection = () => {
               نقدم لك خدمات مركز اتصال احترافية على مدار الساعة، مع فريق مدرب وتقنيات حديثة لتعزيز تواصلك مع عملائك
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button variant="accent" size="xl">
+              <Button 
+                variant="accent" 
+                size="xl"
+                onClick={() => document.getElementById('contact-info')?.scrollIntoView({ behavior: 'smooth' })}
+              >
                 <Phone className="ml-2 h-5 w-5" />
                 اتصل الآن
               </Button>
-              <Button variant="outline" size="xl">
+              <Button 
+                variant="outline" 
+                size="xl"
+                onClick={() => document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })}
+              >
                 تعرف على المزيد
               </Button>
             </div>
