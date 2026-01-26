@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* Alo 80 Call Center Design System */
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
 
 @layer base {
   :root {
@@ -83,7 +83,7 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Cairo', sans-serif;
+    font-family: 'Tajawal', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
