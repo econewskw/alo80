@@ -62,13 +62,13 @@ const ServicesSection = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
               whileHover={{ y: -5 }}
-              className="group bg-card p-8 rounded-2xl shadow-soft hover:shadow-card transition-all duration-300 border border-border/50"
+              className="group bg-card p-5 sm:p-8 rounded-2xl shadow-soft hover:shadow-card transition-all duration-300 border border-border/50"
             >
-              <div className="w-14 h-14 bg-secondary rounded-xl flex items-center justify-center mb-6 group-hover:bg-accent transition-colors duration-300">
-                <service.icon className="h-7 w-7 text-accent group-hover:text-accent-foreground transition-colors duration-300" />
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-secondary rounded-xl flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-accent transition-colors duration-300">
+                <service.icon className="h-6 w-6 sm:h-7 sm:w-7 text-accent group-hover:text-accent-foreground transition-colors duration-300" />
               </div>
-              <h3 className="text-xl font-bold text-foreground mb-3">{service.title}</h3>
-              <p className="text-muted-foreground leading-relaxed">{service.description}</p>
+              <h3 className="text-lg sm:text-xl font-bold text-foreground mb-2 sm:mb-3">{service.title}</h3>
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{service.description}</p>
             </motion.div>
           ))}
         </div>

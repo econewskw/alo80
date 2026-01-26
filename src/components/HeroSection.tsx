@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Phone, Headphones, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import MobileNav from "@/components/MobileNav";
 import logo from "@/assets/alo80-logo.png";
 
 const HeroSection = () => {
@@ -27,6 +28,7 @@ const HeroSection = () => {
           <Button variant="accent" size="lg" className="hidden md:flex">
             احصل على عرض
           </Button>
+          <MobileNav />
         </motion.nav>
 
         {/* Hero Content */}
