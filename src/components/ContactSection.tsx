@@ -71,7 +71,7 @@ const ContactSection = () => {
                   </div>
                   <div>
                     <div className="text-primary-foreground/70 text-sm">العنوان</div>
-                    <div className="text-lg font-semibold">الكويت</div>
+                    <div className="text-lg font-semibold">حولي قطعة 6 - برج الصفاة</div>
                   </div>
                 </div>
               </div>
