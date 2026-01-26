@@ -4,7 +4,6 @@ import { Phone, Mail, MapPin, Send, Instagram, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 const WhatsAppIcon = () => (
@@ -49,17 +48,29 @@ const ContactSection = () => {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from("contact_submissions")
-        .insert({
-          full_name: formData.fullName.trim(),
-          email: formData.email.trim(),
-          phone: formData.phone.trim() || null,
-          company_name: formData.companyName.trim() || null,
-          message: formData.message.trim()
-        });
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit-contact`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+          },
+          body: JSON.stringify({
+            full_name: formData.fullName.trim(),
+            email: formData.email.trim(),
+            phone: formData.phone.trim() || null,
+            company_name: formData.companyName.trim() || null,
+            message: formData.message.trim()
+          })
+        }
+      );
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "حدث خطأ");
+      }
 
       toast({
         title: "تم الإرسال بنجاح!",
@@ -75,9 +86,10 @@ const ContactSection = () => {
       });
     } catch (error) {
       console.error("Error submitting form:", error);
+      const errorMessage = error instanceof Error ? error.message : "لم نتمكن من إرسال رسالتك، يرجى المحاولة لاحقاً";
       toast({
         title: "حدث خطأ",
-        description: "لم نتمكن من إرسال رسالتك، يرجى المحاولة لاحقاً",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
