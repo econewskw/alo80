@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Phone, Mail, MapPin, Send, Instagram } from "lucide-react";
+import { Phone, Mail, MapPin, Send, Instagram, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const WhatsAppIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6">
@@ -17,6 +20,71 @@ const XIcon = () => (
 );
 
 const ContactSection = () => {
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    companyName: "",
+    message: ""
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.fullName.trim() || !formData.email.trim() || !formData.message.trim()) {
+      toast({
+        title: "خطأ",
+        description: "يرجى ملء جميع الحقول المطلوبة",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from("contact_submissions")
+        .insert({
+          full_name: formData.fullName.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim() || null,
+          company_name: formData.companyName.trim() || null,
+          message: formData.message.trim()
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "تم الإرسال بنجاح!",
+        description: "شكراً لتواصلك معنا، سنرد عليك قريباً"
+      });
+
+      setFormData({
+        fullName: "",
+        email: "",
+        phone: "",
+        companyName: "",
+        message: ""
+      });
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast({
+        title: "حدث خطأ",
+        description: "لم نتمكن من إرسال رسالتك، يرجى المحاولة لاحقاً",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <section id="contact" className="py-20 md:py-28 bg-background">
       <div className="container mx-auto px-4">
@@ -118,34 +186,67 @@ const ContactSection = () => {
             className="bg-card p-8 rounded-2xl shadow-card border border-border/50"
           >
             <h3 className="text-2xl font-bold text-foreground mb-6">أرسل رسالتك</h3>
-            <form className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input 
-                  placeholder="الاسم الكامل" 
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  placeholder="الاسم الكامل *" 
                   className="h-12 bg-secondary border-0 text-right"
+                  required
                 />
                 <Input 
+                  name="email"
                   type="email" 
-                  placeholder="البريد الإلكتروني" 
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="البريد الإلكتروني *" 
                   className="h-12 bg-secondary border-0 text-right"
+                  required
                 />
               </div>
               <Input 
+                name="phone"
                 type="tel" 
+                value={formData.phone}
+                onChange={handleChange}
                 placeholder="رقم الهاتف" 
                 className="h-12 bg-secondary border-0 text-right"
               />
               <Input 
+                name="companyName"
+                value={formData.companyName}
+                onChange={handleChange}
                 placeholder="اسم الشركة" 
                 className="h-12 bg-secondary border-0 text-right"
               />
               <Textarea 
-                placeholder="رسالتك..." 
+                name="message"
+                value={formData.message}
+                onChange={handleChange}
+                placeholder="رسالتك... *" 
                 className="min-h-[120px] bg-secondary border-0 text-right resize-none"
+                required
               />
-              <Button variant="accent" size="xl" className="w-full">
-                <Send className="ml-2 h-5 w-5" />
-                إرسال الرسالة
+              <Button 
+                type="submit" 
+                variant="accent" 
+                size="xl" 
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+                    جاري الإرسال...
+                  </>
+                ) : (
+                  <>
+                    <Send className="ml-2 h-5 w-5" />
+                    إرسال الرسالة
+                  </>
+                )}
               </Button>
             </form>
           </motion.div>
