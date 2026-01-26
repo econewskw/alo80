@@ -23,34 +23,34 @@ const FeaturesSection = () => {
             transition={{ duration: 0.7 }}
             className="flex-1"
           >
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-3 sm:gap-6">
               <motion.div 
                 whileHover={{ scale: 1.05 }}
-                className="bg-card p-8 rounded-2xl shadow-card text-center"
+                className="bg-card p-4 sm:p-8 rounded-2xl shadow-card text-center"
               >
-                <div className="text-4xl md:text-5xl font-bold text-accent mb-2">+500</div>
-                <div className="text-muted-foreground font-medium">عميل راضٍ</div>
+                <div className="text-2xl sm:text-4xl md:text-5xl font-bold text-accent mb-1 sm:mb-2">+500</div>
+                <div className="text-muted-foreground font-medium text-sm sm:text-base">عميل راضٍ</div>
               </motion.div>
               <motion.div 
                 whileHover={{ scale: 1.05 }}
-                className="bg-card p-8 rounded-2xl shadow-card text-center"
+                className="bg-card p-4 sm:p-8 rounded-2xl shadow-card text-center"
               >
-                <div className="text-4xl md:text-5xl font-bold text-primary mb-2">24/7</div>
-                <div className="text-muted-foreground font-medium">خدمة متواصلة</div>
+                <div className="text-2xl sm:text-4xl md:text-5xl font-bold text-primary mb-1 sm:mb-2">24/7</div>
+                <div className="text-muted-foreground font-medium text-sm sm:text-base">خدمة متواصلة</div>
               </motion.div>
               <motion.div 
                 whileHover={{ scale: 1.05 }}
-                className="bg-card p-8 rounded-2xl shadow-card text-center"
+                className="bg-card p-4 sm:p-8 rounded-2xl shadow-card text-center"
               >
-                <div className="text-4xl md:text-5xl font-bold text-accent mb-2">+1M</div>
-                <div className="text-muted-foreground font-medium">مكالمة شهرياً</div>
+                <div className="text-2xl sm:text-4xl md:text-5xl font-bold text-accent mb-1 sm:mb-2">+1M</div>
+                <div className="text-muted-foreground font-medium text-sm sm:text-base">مكالمة شهرياً</div>
               </motion.div>
               <motion.div 
                 whileHover={{ scale: 1.05 }}
-                className="bg-card p-8 rounded-2xl shadow-card text-center"
+                className="bg-card p-4 sm:p-8 rounded-2xl shadow-card text-center"
               >
-                <div className="text-4xl md:text-5xl font-bold text-primary mb-2">98%</div>
-                <div className="text-muted-foreground font-medium">نسبة الرضا</div>
+                <div className="text-2xl sm:text-4xl md:text-5xl font-bold text-primary mb-1 sm:mb-2">98%</div>
+                <div className="text-muted-foreground font-medium text-sm sm:text-base">نسبة الرضا</div>
               </motion.div>
             </div>
           </motion.div>
