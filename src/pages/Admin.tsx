@@ -22,6 +22,7 @@ const Admin = () => {
   const [submissions, setSubmissions] = useState<ContactSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState<ContactSubmission | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -32,6 +33,9 @@ const Admin = () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       navigate("/login");
+    } else {
+      setUserId(session.user.id);
+      console.log("User ID:", session.user.id);
     }
   };
 
@@ -105,6 +109,14 @@ const Admin = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {/* User ID Display - Temporary */}
+        {userId && (
+          <div className="mb-4 p-3 bg-secondary rounded-lg text-sm">
+            <span className="text-muted-foreground">معرف المستخدم: </span>
+            <code className="text-foreground font-mono text-xs">{userId}</code>
+          </div>
+        )}
+
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <motion.div
