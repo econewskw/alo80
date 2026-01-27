@@ -4,6 +4,15 @@ import { Button } from "@/components/ui/button";
 import logo from "@/assets/alo80-logo.png";
 
 const HeroSection = () => {
+  const scrollToElement = (elementId: string) => {
+    const element = document.getElementById(elementId);
+    if (element) {
+      const yOffset = -20;
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  };
+
   return (
     <section className="relative min-h-screen bg-gradient-hero overflow-hidden">
       {/* Decorative elements */}
@@ -27,7 +36,7 @@ const HeroSection = () => {
           <Button 
             variant="accent" 
             size="lg" 
-            onClick={() => document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={() => scrollToElement('contact-form')}
           >
             احصل على عرض
           </Button>
@@ -37,7 +46,7 @@ const HeroSection = () => {
         <div className="flex flex-col lg:flex-row items-center justify-between gap-8 md:gap-12 pt-4 md:pt-24">
           
           {/* Mobile: Logo & Animation First */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
@@ -95,7 +104,7 @@ const HeroSection = () => {
               <Button 
                 variant="accent" 
                 size="xl"
-                onClick={() => document.getElementById('contact-info')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => scrollToElement('contact-info')}
               >
                 <Phone className="ml-2 h-5 w-5" />
                 اتصل الآن
@@ -103,7 +112,7 @@ const HeroSection = () => {
               <Button 
                 variant="outline" 
                 size="xl"
-                onClick={() => document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => scrollToElement('contact-form')}
               >
                 تعرف على المزيد
               </Button>
