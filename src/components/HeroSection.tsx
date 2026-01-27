@@ -5,12 +5,21 @@ import logo from "@/assets/alo80-logo.png";
 
 const HeroSection = () => {
   const scrollToElement = (elementId: string) => {
-    const element = document.getElementById(elementId);
-    if (element) {
-      const yOffset = -20;
-      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
+    // Use setTimeout to ensure the scroll happens after any pending state updates
+    setTimeout(() => {
+      const element = document.getElementById(elementId);
+      if (element) {
+        const yOffset = -20;
+        const elementRect = element.getBoundingClientRect();
+        const absoluteElementTop = elementRect.top + window.scrollY;
+        const offsetPosition = absoluteElementTop + yOffset;
+        
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    }, 10);
   };
 
   return (
