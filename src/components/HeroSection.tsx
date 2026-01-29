@@ -5,21 +5,20 @@ import logo from "@/assets/alo80-logo.png";
 
 const HeroSection = () => {
   const scrollToElement = (elementId: string) => {
-    // Use setTimeout to ensure the scroll happens after any pending state updates
-    setTimeout(() => {
-      const element = document.getElementById(elementId);
-      if (element) {
-        const yOffset = -20;
-        const elementRect = element.getBoundingClientRect();
-        const absoluteElementTop = elementRect.top + window.scrollY;
-        const offsetPosition = absoluteElementTop + yOffset;
-        
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth'
-        });
-      }
-    }, 10);
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    requestAnimationFrame(() => {
+      const yOffset = -20;
+      const elementRect = element.getBoundingClientRect();
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const targetPosition = elementRect.top + scrollTop + yOffset;
+      
+      window.scrollTo({
+        top: targetPosition,
+        behavior: 'smooth'
+      });
+    });
   };
 
   return (
@@ -43,6 +42,7 @@ const HeroSection = () => {
             <a href="#contact" className="text-foreground/80 hover:text-accent transition-colors font-medium">تواصل معنا</a>
           </div>
           <Button 
+            type="button"
             variant="accent" 
             size="lg" 
             onClick={() => scrollToElement('contact-form')}
@@ -111,6 +111,7 @@ const HeroSection = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center lg:justify-start">
               <Button 
+                type="button"
                 variant="accent" 
                 size="xl"
                 onClick={() => scrollToElement('contact-info')}
@@ -119,6 +120,7 @@ const HeroSection = () => {
                 اتصل الآن
               </Button>
               <Button 
+                type="button"
                 variant="outline" 
                 size="xl"
                 onClick={() => scrollToElement('contact-form')}
