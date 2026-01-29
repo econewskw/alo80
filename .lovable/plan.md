@@ -6,7 +6,7 @@
 
 ## تحليل السبب الجذري
 
-بعد فحص الكود الحالي في `HeroSection.tsx`:
+الكود الحالي يستخدم `setTimeout` مع تأخير 10ms:
 
 ```typescript
 const scrollToElement = (elementId: string) => {
@@ -27,32 +27,29 @@ const scrollToElement = (elementId: string) => {
 };
 ```
 
-**الأسباب المحتملة للمشكلة:**
+**أسباب المشكلة:**
 
-1. **تضارب مع `scroll-behavior: smooth` في CSS**: الملف `index.css` يحتوي على `scroll-behavior: smooth` في `html`، مما قد يتعارض مع `window.scrollTo` على بعض متصفحات الموبايل
-2. **مشكلة في حساب الموقع**: عند استخدام `getBoundingClientRect()` بعد تمرير الصفحة، القيم قد لا تتحدث بشكل صحيح على بعض المتصفحات
-3. **عدم إلغاء الحدث الافتراضي**: قد يكون هناك تداخل بين سلوك الزر الافتراضي والتمرير المخصص
+1. `setTimeout` لا يتزامن مع دورة رسم المتصفح مما يسبب حسابات خاطئة للموقع
+2. `window.scrollY` قد لا يُرجع قيمة صحيحة على بعض متصفحات Android
+3. الأزرار بدون `type="button"` قد تتداخل مع سلوكيات المتصفح
 
-## الحل المقترح
+## الحل
 
-### التغييرات في `src/components/HeroSection.tsx`
+### التغيير في `src/components/HeroSection.tsx`
 
-سأقوم بإعادة كتابة دالة `scrollToElement` بطريقة أكثر موثوقية:
+**1. تحديث دالة `scrollToElement`:**
 
 ```typescript
 const scrollToElement = (elementId: string) => {
-  // Force layout recalculation before scrolling
   const element = document.getElementById(elementId);
   if (!element) return;
   
-  // Use requestAnimationFrame for better browser compatibility
   requestAnimationFrame(() => {
     const yOffset = -20;
     const elementRect = element.getBoundingClientRect();
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     const targetPosition = elementRect.top + scrollTop + yOffset;
     
-    // Manually animate scroll for better mobile support
     window.scrollTo({
       top: targetPosition,
       behavior: 'smooth'
@@ -61,53 +58,54 @@ const scrollToElement = (elementId: string) => {
 };
 ```
 
-**التحسينات الرئيسية:**
-
-1. **استخدام `requestAnimationFrame`** بدلاً من `setTimeout` - أفضل توافقية مع المتصفحات ويضمن الحساب بعد إعادة الرسم
-2. **استخدام `document.documentElement.scrollTop`** كبديل احتياطي - أكثر توافقية مع المتصفحات المختلفة
-3. **التحقق من العنصر أولاً** - قبل الدخول في `requestAnimationFrame`
-
-### تحسين إضافي: منع سلوك الزر الافتراضي
-
-سأضيف `type="button"` صريحاً لجميع الأزرار للتأكد من عدم وجود سلوك غير متوقع:
+**2. إضافة `type="button"` للأزرار:**
 
 ```tsx
 <Button 
-  type="button"  // إضافة صريحة
+  type="button"
+  variant="accent" 
+  size="lg" 
+  onClick={() => scrollToElement('contact-form')}
+>
+  احصل على عرض
+</Button>
+
+<Button 
+  type="button"
   variant="accent" 
   size="xl"
   onClick={() => scrollToElement('contact-info')}
 >
+  <Phone className="ml-2 h-5 w-5" />
+  اتصل الآن
+</Button>
+
+<Button 
+  type="button"
+  variant="outline" 
+  size="xl"
+  onClick={() => scrollToElement('contact-form')}
+>
+  تعرف على المزيد
+</Button>
 ```
 
 ## الملفات المتأثرة
 
 | الملف | التغيير |
 |-------|---------|
-| `src/components/HeroSection.tsx` | تحديث دالة `scrollToElement` وإضافة `type="button"` للأزرار |
+| `src/components/HeroSection.tsx` | تحديث دالة التمرير + إضافة `type="button"` |
+
+## لماذا هذا الحل يعمل؟
+
+| المشكلة | الحل |
+|---------|------|
+| `setTimeout` غير متزامن مع الرسم | `requestAnimationFrame` يتزامن مع دورة رسم المتصفح |
+| `window.scrollY` غير موثوق | `window.pageYOffset \|\| document.documentElement.scrollTop` أكثر توافقية |
+| سلوك زر غير متوقع | `type="button"` يمنع أي سلوك افتراضي |
 
 ## خطوات التنفيذ
 
-1. تحديث دالة `scrollToElement` في `HeroSection.tsx`
-2. إضافة `type="button"` لجميع الأزرار التي تستخدم التمرير
+1. تحديث دالة `scrollToElement` لاستخدام `requestAnimationFrame`
+2. إضافة `type="button"` لجميع الأزرار الثلاثة
 3. اختبار على Android Chrome للتأكد من حل المشكلة
-
----
-
-## التفاصيل التقنية
-
-### لماذا `requestAnimationFrame` أفضل من `setTimeout`؟
-
-- `requestAnimationFrame` يتزامن مع دورة رسم المتصفح
-- يضمن أن DOM تم تحديثه قبل حساب الموقع
-- أكثر كفاءة في استخدام الموارد على الموبايل
-
-### لماذا `document.documentElement.scrollTop`؟
-
-- بعض متصفحات Android لا تُرجع قيمة صحيحة من `window.scrollY` في بعض الحالات
-- `document.documentElement.scrollTop` هو الطريقة الأكثر توافقية
-
-### لماذا `type="button"`؟
-
-- الأزرار داخل forms تكون افتراضياً `type="submit"`
-- إضافة `type="button"` صريحاً يمنع أي سلوك غير متوقع
