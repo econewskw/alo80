@@ -1,111 +1,112 @@
 
-# خطة إصلاح مشكلة التمرير على الموبايل (Android Chrome)
+## الهدف
+إصلاح مشكلة أن أزرار التمرير في الموبايل (Android / Chrome) تعمل مرة واحدة فقط، بحيث تعمل كل مرة بدون الحاجة لتحديث الصفحة.
 
-## المشكلة
-عند الضغط على أزرار التمرير مثل "اتصل الآن" أو "تعرف على المزيد" على هاتف Android باستخدام Chrome، التمرير يعمل مرة واحدة فقط. الضغطات اللاحقة لا تعمل إلا بعد تحديث الصفحة.
+---
 
-## تحليل السبب الجذري
+## ما اكتشفته في الكود الحالي (سبب محتمل للمشكلة)
+1) **هناك `scroll-behavior: smooth` مفعّلة على عنصر `html` في `src/index.css`**  
+   هذا يجعل كل عمليات التمرير البرمجية “ناعمة” بشكل افتراضي، وأحيانًا يتسبب في سلوك غير مستقر على بعض أجهزة Android عند الجمع بين:
+   - CSS smooth scroll
+   - و `window.scrollTo({ behavior: "smooth" })` في JavaScript
 
-الكود الحالي يستخدم `setTimeout` مع تأخير 10ms:
+2) **التمرير الحالي يعتمد على `window.scrollTo(...)` وحسابات مكان العنصر**  
+   رغم أن التحسين السابق (requestAnimationFrame + pageYOffset) جيد، إلا أن Android Chrome قد “يتجاهل” استدعاءات smooth scroll أحيانًا بعد أول مرة (خصوصًا إذا كان هناك تركيز Focus على عنصر/كيبورد، أو حصلت حركة سحب/Scroll بيد المستخدم بين الضغطات).
 
-```typescript
-const scrollToElement = (elementId: string) => {
-  setTimeout(() => {
-    const element = document.getElementById(elementId);
-    if (element) {
-      const yOffset = -20;
-      const elementRect = element.getBoundingClientRect();
-      const absoluteElementTop = elementRect.top + window.scrollY;
-      const offsetPosition = absoluteElementTop + yOffset;
-      
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
-    }
-  }, 10);
-};
+3) **عناصر زخرفية `absolute` في الـ Hero قد تلتقط اللمس على الموبايل أحيانًا**  
+   في `HeroSection` يوجد عناصر زخرفية `absolute` كبيرة (دوائر blur). بدون `pointer-events: none` قد يحدث أن تضغط على منطقة فوق الزر فعليًا لكن الحدث يذهب للعنصر الزخرفي وليس للزر (سلوك يظهر أكثر على شاشات الموبايل بسبب تداخل الطبقات).
+
+---
+
+## التغييرات المقترحة (حل عملي ومستقر على Android Chrome)
+سأعالج المشكلة من جهتين: (أ) ضمان أن الضغط يصل للزر دائمًا، (ب) جعل التمرير نفسه أكثر “مناعة” ضد مشاكل smooth scroll على Android.
+
+### 1) منع العناصر الزخرفية من التقاط اللمس (HeroSection)
+**الملف:** `src/components/HeroSection.tsx`
+
+- إضافة `pointer-events-none` + ترتيب طبقات واضح:
+  - للدوائر الزخرفية + موجة الـ SVG في الأسفل: `pointer-events-none` ويفضل وضعها “خلف” المحتوى بـ `-z-10` أو جعل محتوى الـ container `relative z-10`.
+
+**النتيجة:** الضغط على الأزرار سيصل لها دائمًا حتى لو كان هناك عنصر زخرفي يغطي المنطقة بصريًا.
+
+---
+
+### 2) تغيير طريقة التمرير إلى `scrollIntoView` مع Offset نظيف (بدون حسابات Y يدوية قدر الإمكان)
+بدل الاعتماد على `getBoundingClientRect + scrollTop + window.scrollTo(smooth)`، سنستخدم:
+- `element.scrollIntoView(...)` (عادةً أكثر ثباتًا على الموبايل)
+- ونضيف Offset باستخدام CSS `scroll-margin-top` عبر Tailwind (`scroll-mt-*`)
+
+**الملف:** `src/components/ContactSection.tsx`
+
+- إضافة `scroll-mt-5` (أو قيمة مناسبة) إلى العناصر الهدف:
+  - `#contact-info`
+  - `#contact-form`
+
+مثال (تصوّر):
+- `<div id="contact-info" className="... scroll-mt-5">`
+- و `motion.div` الخاص بـ `id="contact-form"`: إضافة `scroll-mt-5` داخل `className`.
+
+**النتيجة:** التمرير يقف في مكان صحيح مع مسافة بسيطة أعلى العنصر بدون أي حسابات في JavaScript.
+
+---
+
+### 3) تقوية دالة التمرير ضد مشاكل Android (إلغاء أي scroll ناعم عالق + blur للتركيز + fallback)
+**الملف:** `src/components/HeroSection.tsx`
+
+سأحدث `scrollToElement` لتصبح بالشكل التالي (منطقيًا):
+
+1) العثور على العنصر بالـ id، وإن لم يوجد نخرج.
+2) **إزالة التركيز** من أي عنصر نشط (مفيد جدًا لو كان المستخدم تعامل مع inputs/keyboard سابقًا):
+   - `if (document.activeElement instanceof HTMLElement) document.activeElement.blur();`
+3) **إلغاء أي smooth scroll سابق** قبل بدء تمرير جديد:
+   - `window.scrollTo({ top: window.scrollY, behavior: "auto" });`
+4) داخل `requestAnimationFrame`:
+   - `element.scrollIntoView({ block: "start", behavior: "auto" });`
+   ملاحظة: استخدام `behavior: "auto"` هنا مقصود لتجنب مشاكل Android مع `behavior:"smooth"`، لأن الـ CSS عندنا يطبق smooth أساسًا (وسنعالجه بالخطوة التالية).
+5) **Fallback (اختياري لكن قوي)**: بعد 250–400ms نفحص إن لم تتحرك الصفحة فعليًا، نجرب مرة ثانية بتمرير “فوري” إلى نفس الهدف (auto) لضمان عدم الفشل.
+
+---
+
+### 4) تعديل CSS الخاص بالـ smooth scroll ليكون أقل تسببًا بالمشاكل ويحترم تقليل الحركة
+**الملف:** `src/index.css`
+
+بدل:
+```css
+html { scroll-behavior: smooth; }
 ```
 
-**أسباب المشكلة:**
-
-1. `setTimeout` لا يتزامن مع دورة رسم المتصفح مما يسبب حسابات خاطئة للموقع
-2. `window.scrollY` قد لا يُرجع قيمة صحيحة على بعض متصفحات Android
-3. الأزرار بدون `type="button"` قد تتداخل مع سلوكيات المتصفح
-
-## الحل
-
-### التغيير في `src/components/HeroSection.tsx`
-
-**1. تحديث دالة `scrollToElement`:**
-
-```typescript
-const scrollToElement = (elementId: string) => {
-  const element = document.getElementById(elementId);
-  if (!element) return;
-  
-  requestAnimationFrame(() => {
-    const yOffset = -20;
-    const elementRect = element.getBoundingClientRect();
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    const targetPosition = elementRect.top + scrollTop + yOffset;
-    
-    window.scrollTo({
-      top: targetPosition,
-      behavior: 'smooth'
-    });
-  });
-};
+سنحوّله إلى:
+- smooth فقط عندما المستخدم لا يفعّل “تقليل الحركة”:
+```css
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
 ```
 
-**2. إضافة `type="button"` للأزرار:**
+**النتيجة:** سلوك أنظف على الأجهزة + تحسين وصول (Accessibility) + تقليل احتمالات تعارضات Android.
 
-```tsx
-<Button 
-  type="button"
-  variant="accent" 
-  size="lg" 
-  onClick={() => scrollToElement('contact-form')}
->
-  احصل على عرض
-</Button>
+---
 
-<Button 
-  type="button"
-  variant="accent" 
-  size="xl"
-  onClick={() => scrollToElement('contact-info')}
->
-  <Phone className="ml-2 h-5 w-5" />
-  اتصل الآن
-</Button>
+## قائمة الملفات المتأثرة
+- `src/components/HeroSection.tsx`
+  - إضافة `pointer-events-none` / ضبط z-index للعناصر الزخرفية
+  - تحديث `scrollToElement` ليستخدم `scrollIntoView` + cancel/blur/fallback
+- `src/components/ContactSection.tsx`
+  - إضافة `scroll-mt-*` للـ targets: `contact-info` و `contact-form`
+- `src/index.css`
+  - نقل `scroll-behavior: smooth` إلى media query لـ `prefers-reduced-motion`
 
-<Button 
-  type="button"
-  variant="outline" 
-  size="xl"
-  onClick={() => scrollToElement('contact-form')}
->
-  تعرف على المزيد
-</Button>
-```
+---
 
-## الملفات المتأثرة
+## معايير النجاح (Acceptance Criteria)
+على Android Chrome:
+1) اضغط “اتصل الآن” → ينقلك إلى “معلومات التواصل”.
+2) ارجع لأعلى (بالسكرول اليدوي) → اضغط “اتصل الآن” مرة ثانية → يعمل مباشرة.
+3) كرر نفس الشيء 5 مرات متتالية بدون تحديث الصفحة.
+4) جرّب أيضًا بعد فتح/إغلاق الكيبورد (مثلاً لمس حقل في الفورم ثم الرجوع للأعلى) ثم الضغط مرة أخرى.
 
-| الملف | التغيير |
-|-------|---------|
-| `src/components/HeroSection.tsx` | تحديث دالة التمرير + إضافة `type="button"` |
+---
 
-## لماذا هذا الحل يعمل؟
-
-| المشكلة | الحل |
-|---------|------|
-| `setTimeout` غير متزامن مع الرسم | `requestAnimationFrame` يتزامن مع دورة رسم المتصفح |
-| `window.scrollY` غير موثوق | `window.pageYOffset \|\| document.documentElement.scrollTop` أكثر توافقية |
-| سلوك زر غير متوقع | `type="button"` يمنع أي سلوك افتراضي |
-
-## خطوات التنفيذ
-
-1. تحديث دالة `scrollToElement` لاستخدام `requestAnimationFrame`
-2. إضافة `type="button"` لجميع الأزرار الثلاثة
-3. اختبار على Android Chrome للتأكد من حل المشكلة
+## ملاحظات تقنية (مهمة)
+- `scrollIntoView` مع `scroll-mt-*` عادةً يعطي أفضل توافق على الموبايل من حسابات `getBoundingClientRect` + `window.scrollTo`.
+- `pointer-events-none` على العناصر الزخرفية يزيل احتمال “الضغط لا يصل للزر” وهو سبب شائع جدًا على الموبايل بسبب طبقات overlay الشفافة.
