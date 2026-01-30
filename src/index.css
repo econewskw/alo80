@@ -77,8 +77,14 @@
   }
 
   html {
-    scroll-behavior: smooth;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Only apply smooth scroll when user hasn't enabled reduced motion */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 
   body {
