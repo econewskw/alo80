@@ -124,7 +124,7 @@ const ContactSection = () => {
             transition={{ duration: 0.7 }}
             className="space-y-8"
           >
-            <div id="contact-info" className="bg-gradient-primary p-5 sm:p-8 rounded-2xl text-primary-foreground">
+            <div id="contact-info" className="bg-gradient-primary p-5 sm:p-8 rounded-2xl text-primary-foreground scroll-mt-5">
               <h3 className="text-2xl font-bold mb-6">معلومات التواصل</h3>
               <div className="space-y-6">
                 <div className="flex items-center gap-4">
@@ -196,7 +196,7 @@ const ContactSection = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
             id="contact-form"
-            className="bg-card p-5 sm:p-8 rounded-2xl shadow-card border border-border/50"
+            className="bg-card p-5 sm:p-8 rounded-2xl shadow-card border border-border/50 scroll-mt-5"
           >
             <h3 className="text-2xl font-bold text-foreground mb-6">أرسل رسالتك</h3>
             <form onSubmit={handleSubmit} className="space-y-5">

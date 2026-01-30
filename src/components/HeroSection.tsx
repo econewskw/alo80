@@ -8,24 +8,33 @@ const HeroSection = () => {
     const element = document.getElementById(elementId);
     if (!element) return;
     
+    // Remove focus from any active element (fixes keyboard/input issues on mobile)
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    
+    // Cancel any ongoing smooth scroll
+    window.scrollTo({ top: window.scrollY, behavior: "auto" });
+    
     requestAnimationFrame(() => {
-      const yOffset = -20;
-      const elementRect = element.getBoundingClientRect();
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const targetPosition = elementRect.top + scrollTop + yOffset;
+      // Use scrollIntoView with CSS scroll-margin for offset
+      element.scrollIntoView({ block: "start", behavior: "smooth" });
       
-      window.scrollTo({
-        top: targetPosition,
-        behavior: 'smooth'
-      });
+      // Fallback: if scroll didn't happen, force it after 300ms
+      const initialY = window.scrollY;
+      setTimeout(() => {
+        if (Math.abs(window.scrollY - initialY) < 10) {
+          element.scrollIntoView({ block: "start", behavior: "auto" });
+        }
+      }, 300);
     });
   };
 
   return (
     <section className="relative min-h-screen bg-gradient-hero overflow-hidden">
-      {/* Decorative elements */}
-      <div className="absolute top-20 right-10 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-20 left-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+      {/* Decorative elements - pointer-events-none to prevent touch capture on mobile */}
+      <div className="absolute top-20 right-10 w-64 h-64 bg-accent/10 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute bottom-20 left-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none -z-10" />
       
       <div className="container mx-auto px-4 pt-8">
         {/* Navigation - Desktop only */}
@@ -132,8 +141,8 @@ const HeroSection = () => {
         </div>
       </div>
 
-      {/* Wave decoration */}
-      <div className="absolute bottom-0 left-0 right-0">
+      {/* Wave decoration - pointer-events-none to prevent touch capture */}
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
         <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M0 120L60 105C120 90 240 60 360 45C480 30 600 30 720 37.5C840 45 960 60 1080 67.5C1200 75 1320 75 1380 75L1440 75V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="white"/>
         </svg>
