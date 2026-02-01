@@ -1,11 +1,21 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LogOut, Mail, Phone, Building2, Calendar, MessageSquare, Loader2, RefreshCw, Inbox } from "lucide-react";
+import { LogOut, Mail, Phone, Building2, Calendar, MessageSquare, Loader2, RefreshCw, Inbox, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import logo from "@/assets/alo80-logo.png";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ContactSubmission {
   id: string;
@@ -22,6 +32,9 @@ const Admin = () => {
   const [submissions, setSubmissions] = useState<ContactSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState<ContactSubmission | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [submissionToDelete, setSubmissionToDelete] = useState<ContactSubmission | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -82,6 +95,47 @@ const Admin = () => {
       hour: "2-digit",
       minute: "2-digit"
     });
+  };
+
+  const handleDeleteClick = (submission: ContactSubmission, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSubmissionToDelete(submission);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!submissionToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("contact_submissions")
+        .delete()
+        .eq("id", submissionToDelete.id);
+
+      if (error) throw error;
+
+      setSubmissions(prev => prev.filter(s => s.id !== submissionToDelete.id));
+      if (selectedSubmission?.id === submissionToDelete.id) {
+        setSelectedSubmission(null);
+      }
+      
+      toast({
+        title: "تم الحذف",
+        description: "تم حذف الرسالة بنجاح"
+      });
+    } catch (error) {
+      console.error("Error deleting submission:", error);
+      toast({
+        title: "خطأ",
+        description: "فشل في حذف الرسالة",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+      setSubmissionToDelete(null);
+    }
   };
 
   return (
@@ -162,9 +216,19 @@ const Admin = () => {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <h4 className="font-semibold text-foreground">{submission.full_name}</h4>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDate(submission.created_at)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(submission.created_at)}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => handleDeleteClick(submission, e)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <p className="text-sm text-muted-foreground line-clamp-2">
                     {submission.message}
@@ -255,6 +319,35 @@ const Admin = () => {
           </div>
         )}
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف رسالة {submissionToDelete?.full_name}؟ لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel disabled={isDeleting}>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                  جاري الحذف...
+                </>
+              ) : (
+                "حذف"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
